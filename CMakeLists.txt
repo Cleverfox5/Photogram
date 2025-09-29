@@ -25,14 +25,12 @@ find_package(jwt-cpp CONFIG REQUIRED)
 #Boost
 set(Boost_ROOT "c:/Program Files/boost/boost_1_89_0")
 find_package(Boost 1.89 REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
-#if (Boost_FOUND)
-#    message(STATUS "Location: ${Boost_LIBRARY_DIRS}")
-
 #src
-file(GLOB MAIN_SRC main.cpp)
+file(GLOB MAIN_SRC second_server_src/*.cpp
+                   second_server_src/*.h
+)
 
 source_group("src" FILES ${MAIN_SRC})
 
@@ -40,12 +38,17 @@ add_executable(${TARGET_NAME} ${MAIN_SRC})
 
 target_include_directories(${TARGET_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
 
+set(libpqxx_DIR "${LIB_PLACE}/libpqxx")
+
+find_package(libpqxx REQUIRED)
+
 #link
 target_link_libraries(
     ${TARGET_NAME} 
     PRIVATE 
     nlohmann_json::nlohmann_json
     jwt-cpp::jwt-cpp
+    libpqxx::pqxx
 )
 
 #settings for VS
