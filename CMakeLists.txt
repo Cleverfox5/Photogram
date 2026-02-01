@@ -39,6 +39,7 @@ add_executable(${TARGET_NAME} ${MAIN_SRC})
 target_include_directories(${TARGET_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
 
 set(libpqxx_DIR "${LIB_PLACE}/libpqxx")
+list(APPEND CMAKE_PREFIX_PATH "${libpqxx_DIR}/7.5.3_x64_msvc-14.1/lib/cmake")
 
 find_package(libpqxx REQUIRED)
 
@@ -50,6 +51,8 @@ target_link_libraries(
     jwt-cpp::jwt-cpp
     libpqxx::pqxx
 )
+
+target_include_directories(${TARGET_NAME} PRIVATE "${libpqxx_DIR}/7.5.3_x64_msvc-14.1/include")
 
 #settings for VS
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${TARGET_NAME})
