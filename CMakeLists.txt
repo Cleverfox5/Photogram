@@ -20,10 +20,12 @@ set(nlohmann_json_DIR ${LIB_PLACE}/json/build)
 find_package(nlohmann_json 3.12.0 REQUIRED)
 
 #jwt-cpp
+set(jwt-cpp_DIR ${LIB_PLACE}/jwt-cpp)
+list(APPEND CMAKE_PREFIX_PATH "${jwt-cpp_DIR}/cmake")
 find_package(jwt-cpp CONFIG REQUIRED)
 
 #Boost
-set(Boost_ROOT "c:/Program Files/boost/boost_1_89_0")
+set(Boost_ROOT ${LIB_PLACE}/boost/boost_1_89_0)
 find_package(Boost 1.89 REQUIRED)
 link_directories(${Boost_LIBRARY_DIRS})
 
