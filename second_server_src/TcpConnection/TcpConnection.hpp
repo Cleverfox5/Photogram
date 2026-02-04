@@ -4,10 +4,10 @@
 #include <boost/beast.hpp>
 #include <nlohmann/json.hpp>
 #include <string>
-#include "AnotherServerConnection.h"
-#include "FormResponse.h"
-#include "DBclient.h"
-#include "FormDataParser.h"
+#include "AnotherServerConnection.hpp"
+#include "FormResponse.hpp"
+#include "DBclient.hpp"
+#include "FormDataParser.hpp"
 
 using nlohmann::json;
 using boost::asio::ip::tcp;
