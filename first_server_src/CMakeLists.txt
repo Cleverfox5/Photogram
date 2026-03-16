@@ -45,12 +45,22 @@ file(GLOB MAIN_SRC              ${CMAKE_SOURCE_DIR}/*.cpp
                                 ${CMAKE_SOURCE_DIR}/*.h
 )
 
+
+
+file(GLOB ALL_FIRST_SERVER_SRC ${first_server_src_dir}/Request.cpp
+                               ${first_server_src_dir}/Request.h
+                               ${first_server_src_dir}/FormData.cpp
+                               ${first_server_src_dir}/FormData.h
+                               ${first_server_src_dir}/HashTools.cpp
+                               ${first_server_src_dir}/HashTools.h
+)
+
 source_group(TREE ${first_server_src_dir} 
     PREFIX "src"
     FILES ${ALL_FIRST_SERVER_SRC}
 )
 
-add_executable(${TARGET_NAME} ${MAIN_SRC})
+add_executable(${TARGET_NAME} ${MAIN_SRC} ${ALL_FIRST_SERVER_SRC})
 
 #include surs directories
 target_include_directories(${TARGET_NAME} PRIVATE ${first_server_src_dir})
