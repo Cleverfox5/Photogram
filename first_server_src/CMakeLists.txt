@@ -35,67 +35,40 @@ find_package(libpqxx REQUIRED)
 
 #libsodium
 set(libsodium_DIR "${LIB_PLACE}/libsodium")
-set(SODIUM_LIBRARY ${libsodium_DIR}/v143/static/libsodium.lib)
+set(SODIUM_LIB_DIR "${libsodium_DIR}/x64/Release/v143/static")
+set(SODIUM_LIB ${SODIUM_LIB_DIR}/libsodium.lib)
 
-
-
-
-set(second_server_dir ${CMAKE_SOURCE_DIR}/second_server_src)
+set(first_server_src_dir ${CMAKE_SOURCE_DIR}/data)
 
 #src
 file(GLOB MAIN_SRC              ${CMAKE_SOURCE_DIR}/*.cpp
                                 ${CMAKE_SOURCE_DIR}/*.h
 )
-#file(GLOB SEC_CONNECT_SRC      ${second_server_dir}/AnotherServerConnection/*.[hc]pp)
-#file(GLOB SEC_DB_SRC           ${second_server_dir}/DBclient/*.[hc]pp)
-#file(GLOB SEC_FORM_PARS_SRC   ${second_server_dir}/FormDataParser/*.[hc]pp)
-#file(GLOB SEC_FORM_REQ_SRC    ${second_server_dir}/FormRequest/*.[hc]pp)
-#file(GLOB SEC_FORM_RSP_SRC    ${second_server_dir}/FormResponse/*.[hc]pp)
-#file(GLOB SEC_TCP_CONNECT_SRC ${second_server_dir}/TcpConnection/*.[hc]pp)
-#file(GLOB SEC_TCP_SERVER_SRC  ${second_server_dir}/TcpServer/*.[hc]pp)
 
-#set(ALL_SECOND_SERVER_SRC
-#    ${MAIN_SRC}
-#    ${SEC_CONNECT_SRC}
-#    ${SEC_DB_SRC}
-#    ${SEC_FORM_PARS_SRC}
-#    ${SEC_FORM_REQ_SRC}
-#    ${SEC_FORM_RSP_SRC}
-#    ${SEC_TCP_CONNECT_SRC}
-#    ${SEC_TCP_SERVER_SRC}
-#)
-
-#source_group(TREE ${second_server_dir} 
-#    PREFIX "src"
-#    FILES ${ALL_SECOND_SERVER_SRC}
-#)
+source_group(TREE ${first_server_src_dir} 
+    PREFIX "src"
+    FILES ${ALL_FIRST_SERVER_SRC}
+)
 
 add_executable(${TARGET_NAME} ${MAIN_SRC})
 
 #include surs directories
-#target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir})
-#target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir}/AnotherServerConnection)
-#target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir}/DBclient)
-#target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir}/FormDataParser)
-#target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir}/FormRequest)
-#target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir}/TcpConnection)
-#target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir}/TcpServer)
-#target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir}/FormResponse)
+target_include_directories(${TARGET_NAME} PRIVATE ${first_server_src_dir})
 
 #include lib directories
 target_include_directories(${TARGET_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
 target_include_directories(${TARGET_NAME} PRIVATE "${libpqxx_DIR}/include")
 target_include_directories(${TARGET_NAME} PRIVATE "${libsodium_DIR}/include")
 
-#link
 target_link_libraries(
     ${TARGET_NAME} 
     PRIVATE 
     nlohmann_json::nlohmann_json
     jwt-cpp::jwt-cpp
     libpqxx::pqxx
-    ${SODIUM_LIBRARY}
+    ${SODIUM_LIB}
 )
 
 #settings for VS
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${TARGET_NAME})
+target_compile_definitions(${TARGET_NAME} PRIVATE SODIUM_STATIC)
