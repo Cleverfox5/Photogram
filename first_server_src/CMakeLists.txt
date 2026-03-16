@@ -53,6 +53,10 @@ file(GLOB ALL_FIRST_SERVER_SRC ${first_server_src_dir}/Request.cpp
                                ${first_server_src_dir}/FormData.h
                                ${first_server_src_dir}/HashTools.cpp
                                ${first_server_src_dir}/HashTools.h
+                               ${first_server_src_dir}/JwtToken.cpp
+                               ${first_server_src_dir}/JwtToken.h
+                               ${first_server_src_dir}/WorkWithPostgreSQL.cpp
+                               ${first_server_src_dir}/WorkWithPostgreSQL.h
 )
 
 source_group(TREE ${first_server_src_dir} 
