@@ -1,21 +1,18 @@
-﻿//#include "PhotogramAuth.h"
-//#include "MyServer.h"
+﻿#include "MyServer.h"
 
-#include <nlohmann/json.hpp>
-#include <jwt-cpp/jwt.h>
-#include <pqxx/pqxx>
-#include <sodium.h>
+#include <iostream>
 
 
 const short PORT = 8080;
 
 
 int main(int argc, char* argv[]) {
-    //MyServer server(PORT);
-    //server.run();
+    MyServer server(PORT);
+    server.run();
+    std::cout << "The server has started\n";
     getchar();
     std::cout << "The server is shutting down\n";
-    //server.stop();
+    server.stop();
 
     return 0;
 }

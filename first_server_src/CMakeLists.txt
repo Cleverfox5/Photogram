@@ -59,6 +59,10 @@ file(GLOB ALL_FIRST_SERVER_SRC ${first_server_src_dir}/Request.cpp
                                ${first_server_src_dir}/WorkWithPostgreSQL.h
                                ${first_server_src_dir}/ResponseSender.cpp
                                ${first_server_src_dir}/ResponseSender.h
+                               ${first_server_src_dir}/WorkWithClient.h
+                               ${first_server_src_dir}/WorkWithClient.cpp
+                               ${first_server_src_dir}/MyServer.cpp
+                               ${first_server_src_dir}/MyServer.h
 )
 
 source_group(TREE ${first_server_src_dir} 
