@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
     std::cout << "The server has started\n";
     getchar();
     std::cout << "The server is shutting down\n";
-    server.stop();
+    //server.stop();
 
     return 0;
 }

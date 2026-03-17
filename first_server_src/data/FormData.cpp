@@ -20,23 +20,14 @@ void FormData::addPhoto(std::string& request, size_t & argPostion, size_t startP
 {
 	size_t endPhotoHeaders = request.find("\r\n\r\n", startPositon, sizeof("\r\n\r\n") - 1);
 	std::string photoHeaders = request.substr(startPositon, endPhotoHeaders - startPositon);
-	std::string photo_type = utils.getValueSomeHeader(photoHeaders, "Content-Type: ");
+	std::string photo_type = utils.getType(photoHeaders, "Content-Type: ");
 	userProperties["photo_type"] = photo_type;
+	argPostion = photoHeaders.find("Content-Type: ");
+	size_t startPhoto = startPositon + argPostion + sizeof("Content-Type: ") + photo_type.size() - 1 + 4;
+	size_t sizePhoto = finishPositon - startPhoto - 2;
+	std::string name = utils.getPropertisName(request, startPositon, "filename");
 
-	if ((argPostion = photoHeaders.find("Content-Type: image/png")) != std::string::npos) {
-		size_t startPhoto = startPositon + argPostion + sizeof("Content-Type: image/png") - 1 + 4;
-		size_t sizePhoto = finishPositon - startPhoto - 2;
-		std::string name = utils.getPropertisName(request, startPositon, "filename");
-
-		filesCoordinates[name] = { startPhoto, sizePhoto };
-	}
-	else if ((argPostion = photoHeaders.find("Content-Type: image/jpeg")) != std::string::npos) {
-		size_t startPhoto = startPositon + argPostion + sizeof("Content-Type: image/jpeg") - 1 + 4;
-		size_t sizePhoto = finishPositon - startPhoto - 2;
-		std::string name = utils.getPropertisName(request, startPositon, "filename");
-
-		filesCoordinates[name] = { startPhoto, sizePhoto };
-	}
+	filesCoordinates[name] = { startPhoto, sizePhoto };
 }
 
 void FormData::separatorToPropertis(std::string & request, std::string & separator,
@@ -45,7 +36,7 @@ void FormData::separatorToPropertis(std::string & request, std::string & separat
 {
 	size_t startPositon;
 	if ((startPositon = request.find(separator)) == std::string::npos) {
-		//throw;
+		throw std::runtime_error("400");
 	}
 	startPositon += separator.size() + 2;
 	size_t finishPositon = startPositon;
@@ -69,4 +60,24 @@ void FormData::separatorToPropertis(std::string & request, std::string & separat
 
 		startPositon = finishPositon + separator.size() - 1 + 2;
 	}
+}
+
+void FormData::parsePhotoOnly(std::string& request,
+	std::unordered_map<std::string, std::string>& userProperties,
+	std::unordered_map<std::string, std::pair<std::size_t, std::size_t>>& filesCoordinates)
+{
+	std::string separator = getSeparator(request);
+	
+	size_t startPositon;
+	if ((startPositon = request.find(separator)) == std::string::npos) {
+		throw std::runtime_error("400");
+	}
+	startPositon += separator.size() + 2;
+	size_t finishPositon = startPositon;
+	size_t argPostion;
+	size_t isNextPhoto = false;
+	if ((finishPositon = request.find(separator, finishPositon + separator.size())) != std::string::npos) {
+		addPhoto(request, argPostion, startPositon, finishPositon, filesCoordinates, userProperties);
+	}
+	else throw std::runtime_error("400");
 }

@@ -14,14 +14,12 @@ std::string HashTools::hashPassword(const std::string password) {
 	
 	char hex_hash[crypto_generichash_BYTES * 2 + 1];
 	sodium_bin2hex(hex_hash, sizeof(hex_hash), hash, sizeof(hash));
-	
+
 	return std::string(hex_hash);
 }
 
 bool HashTools::verify(std::string &password, std::string &hashPassword) {
 	if (crypto_pwhash_str_verify(hashPassword.c_str(), password.c_str(), password.size()) == -1)
 		return false;
-	return true;
-
 	return true;
 }

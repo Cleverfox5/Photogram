@@ -1,5 +1,5 @@
-#include "WorkWithClient.h"
 #include "MyServer.h"
+#include "WorkWithClient.h"
 
 MyServer::MyServer(short port) : port(port){
 	setlocale(0, "");
@@ -37,31 +37,14 @@ MyServer::MyServer(short port) : port(port){
 	}
 
 	std::cout << "Server listening on port: " << port << std::endl;
-	/*std::thread stopThread(stopEverything);
-	stopThread.detach();*/
 }
 
 MyServer::~MyServer() {
-	stop();
 	WSACleanup();
 }
 
 void MyServer::run() {
 	std::thread(&MyServer::waitForNewConnection, this).detach();
-}
-
-void MyServer::stop() {
-	isAcceptNewConnection = false;
-	closesocket(serverSocket);
-	for (auto& element : userSocketMap) {
-		SOCKET currSocket = element.second;
-		closesocket(currSocket);
-	}
-	for (auto& thread : threadSet) {
-		if (thread && thread->joinable()) {
-			thread->join();
-		}
-	}
 }
 
 void MyServer::waitForNewConnection() {
@@ -70,41 +53,32 @@ void MyServer::waitForNewConnection() {
 		SOCKET newConnection;
 		newConnection = accept(serverSocket, (struct sockaddr*)&serverAddress, &size);
 
-		if (newConnection == INVALID_SOCKET) std::cout << "Error with Connection\n";
-		else {
-			struct sockaddr_in clientAddr;
-			int clientLen = sizeof(clientAddr);
-			std::string clientAddres;
-			if (!getpeername(newConnection, (struct sockaddr*)&clientAddr, &clientLen)) {
-				clientAddres = inet_ntoa(clientAddr.sin_addr);
-				clientAddres.append(":" + std::to_string(clientAddr.sin_port));
-			}
-			else {
-				std::cerr << "Error with getting peer name\n";
-				continue;
-			}
-			{
-				std::lock_guard<std::mutex> lock(mutexForSocketMap);
-				if (userSocketMap.find(clientAddres) != userSocketMap.end()) {
-					closesocket(newConnection);
-					continue;
-				}
-				userSocketMap[clientAddres] = newConnection;
-			}
-
-			std::cout << "Connection is correct\n";
-
-			std::lock_guard<std::mutex> lock(mutexForThreadSet);
-			threadSet.emplace(std::make_shared<std::thread>(&MyServer::threatForSomeSocket, this, newConnection, clientAddres));
+		if (newConnection == INVALID_SOCKET) { 
+			std::cout << "Error with Connection\n";
+			continue;
 		}
+
+		struct sockaddr_in clientAddr;
+		int clientLen = sizeof(clientAddr);
+		std::string clientAddres;
+
+		if (!getpeername(newConnection, (struct sockaddr*)&clientAddr, &clientLen)) {
+			clientAddres = inet_ntoa(clientAddr.sin_addr);
+			clientAddres.append(":" + std::to_string(clientAddr.sin_port));
+		}
+		else {
+			std::cerr << "Error with getting peer name\n";
+			closesocket(newConnection);
+			continue;
+		}
+
+		std::cout << "Connection is correct\n";
+
+		std::thread(&MyServer::threatForSomeSocket, this, newConnection, clientAddres).detach();
 	}
 }
 
 void MyServer::threatForSomeSocket(SOCKET clientSocket, std::string clientAddres) {
 	WorkWithClient currClietn(clientSocket, clientAddres);
 	currClietn.run();
-	{
-		std::lock_guard<std::mutex> lock(mutexForSocketMap);
-		userSocketMap.erase(clientAddres);
-	}
 }
