@@ -1,4 +1,4 @@
-#include "AnotherServerConnection.h"
+#include "AnotherServerConnection.hpp"
 
 AnotherServerConnection::AnotherServerConnection(boost::asio::io_context& io_context)
     : an_server_socket_(io_context), resolver_(io_context) {}

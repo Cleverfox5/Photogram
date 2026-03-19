@@ -1,4 +1,4 @@
-#include "DBclient.h"
+#include "DBclient.hpp"
 
 DBclient::DBclient(const std::string& connection_str)
 	: connection_(std::make_shared<pqxx::connection>(connection_str))
