@@ -20,21 +20,18 @@ set(nlohmann_json_DIR ${LIB_PLACE}/json/build)
 find_package(nlohmann_json 3.12.0 REQUIRED)
 
 #jwt-cpp
-set(jwt-cpp_DIR ${LIB_PLACE}/jwt-cpp)
-list(APPEND CMAKE_PREFIX_PATH "${jwt-cpp_DIR}/cmake")
+set(OPENSSL_ROOT_DIR ${LIB_PLACE}/OpenSSL)
+set(jwt-cpp_DIR ${LIB_PLACE}/jwt-cpp/cmake)
 find_package(jwt-cpp CONFIG REQUIRED)
+
+#libpqxx
+set(libpqxx_DIR "${LIB_PLACE}/libpqxx/lib/cmake/libpqxx")
+find_package(libpqxx REQUIRED)
 
 #Boost
 set(Boost_ROOT ${LIB_PLACE}/boost/boost_1_89_0)
 find_package(Boost 1.89 REQUIRED)
 link_directories(${Boost_LIBRARY_DIRS})
-
-
-#libpqxx
-set(libpqxx_DIR "${LIB_PLACE}/libpqxx")
-list(APPEND CMAKE_PREFIX_PATH "${libpqxx_DIR}/lib/cmake")
-
-find_package(libpqxx REQUIRED)
 
 
 set(second_server_dir ${CMAKE_SOURCE_DIR}/second_server_src)
