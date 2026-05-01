@@ -1,18 +1,25 @@
 cmake_minimum_required(VERSION 3.20)
 
 set(TARGET_NAME Pthotogram_1)
-project(${TARGET_NAME} VERSION 	1.0.0)
+project(${TARGET_NAME})
 
 set(CMAKE_CXX_STANDARD 17)
 
 cmake_policy(SET CMP0167 OLD)
 
-if(NOT WIN32)
-    message(FATAL_ERROR "Don't support Linux")
+if (WIN32)
+    add_compile_definitions(_WIN32_WINNT=0x0A00) #from Boost documentation
 endif()
 
 #set paths
-set(DEV_ROOT c:/dev)
+if (WIN32)
+    set(DEV_ROOT c:/dev)
+elseif(UNIX)
+    set(DEV_ROOT /usr/lib)
+else()
+    message(FATAL_ERROR "Don't support this OS")
+endif()
+
 set(LIB_PLACE ${DEV_ROOT}/common)
 
 #nlohmann_json
@@ -20,18 +27,18 @@ set(nlohmann_json_DIR ${LIB_PLACE}/json/build)
 find_package(nlohmann_json 3.12.0 REQUIRED)
 
 #jwt-cpp
+set(OPENSSL_ROOT_DIR ${LIB_PLACE}/OpenSSL)
+set(jwt-cpp_DIR ${LIB_PLACE}/jwt-cpp/cmake)
 find_package(jwt-cpp CONFIG REQUIRED)
+
+#libpqxx
+set(libpqxx_DIR "${LIB_PLACE}/libpqxx/lib/cmake/libpqxx")
+find_package(libpqxx REQUIRED)
 
 #Boost
 set(Boost_ROOT ${LIB_PLACE}/boost/boost_1_89_0)
 find_package(Boost 1.89 REQUIRED)
 link_directories(${Boost_LIBRARY_DIRS})
-
-
-#libpqxx
-set(libpqxx_DIR "${LIB_PLACE}/libpqxx")
-list(APPEND CMAKE_PREFIX_PATH "${libpqxx_DIR}/lib/cmake")
-find_package(libpqxx REQUIRED)
 
 #libsodium
 set(libsodium_DIR "${LIB_PLACE}/libsodium")
