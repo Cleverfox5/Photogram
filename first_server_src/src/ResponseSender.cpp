@@ -1,4 +1,4 @@
-#include "ResponseSender.h"
+#include "ResponseSender.hpp"
 #include <iostream>
 
 ResponseSender::ResponseSender(SOCKET socket) : clientSocket(socket) {}

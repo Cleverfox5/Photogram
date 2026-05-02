@@ -2,9 +2,9 @@
 #include <WinSock2.h>
 #include <string>
 #include <memory>
-#include "WorkWithPostgreSQL.h"
-#include "JwtToken.h"
-#include "ResponseSender.h"
+#include "WorkWithPostgreSQL.hpp"
+#include "JwtToken.hpp"
+#include "ResponseSender.hpp"
 
 class WorkWithClient {
 	SOCKET clientSocket;

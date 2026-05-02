@@ -1,5 +1,5 @@
-#include "MyServer.h"
-#include "WorkWithClient.h"
+#include "MyServer.hpp"
+#include "WorkWithClient.hpp"
 
 MyServer::MyServer(short port) : port(port){
 	setlocale(0, "");

@@ -7,10 +7,6 @@ set(CMAKE_CXX_STANDARD 17)
 
 cmake_policy(SET CMP0167 OLD)
 
-if (WIN32)
-    add_compile_definitions(_WIN32_WINNT=0x0A00) #from Boost documentation
-endif()
-
 #set paths
 if (WIN32)
     set(DEV_ROOT c:/dev)
@@ -19,7 +15,6 @@ elseif(UNIX)
 else()
     message(FATAL_ERROR "Don't support this OS")
 endif()
-
 set(LIB_PLACE ${DEV_ROOT}/common)
 
 #nlohmann_json
@@ -35,56 +30,27 @@ find_package(jwt-cpp CONFIG REQUIRED)
 set(libpqxx_DIR "${LIB_PLACE}/libpqxx/lib/cmake/libpqxx")
 find_package(libpqxx REQUIRED)
 
-#Boost
-set(Boost_ROOT ${LIB_PLACE}/boost/boost_1_89_0)
-find_package(Boost 1.89 REQUIRED)
-link_directories(${Boost_LIBRARY_DIRS})
-
 #libsodium
 set(libsodium_DIR "${LIB_PLACE}/libsodium")
 set(SODIUM_LIB_DIR "${libsodium_DIR}/x64/Release/v143/static")
 set(SODIUM_LIB ${SODIUM_LIB_DIR}/libsodium.lib)
 
-set(first_server_src_dir ${CMAKE_SOURCE_DIR}/data)
+set(content_server_src_dir ${CMAKE_SOURCE_DIR}/src)
 
 #src
-file(GLOB MAIN_SRC              ${CMAKE_SOURCE_DIR}/*.cpp
-                                ${CMAKE_SOURCE_DIR}/*.h
-)
+file(GLOB ALL_CONTENT_SERVER_SRC ${content_server_src_dir}/*.[hc]pp)
 
-
-
-file(GLOB ALL_FIRST_SERVER_SRC ${first_server_src_dir}/Request.cpp
-                               ${first_server_src_dir}/Request.h
-                               ${first_server_src_dir}/FormData.cpp
-                               ${first_server_src_dir}/FormData.h
-                               ${first_server_src_dir}/HashTools.cpp
-                               ${first_server_src_dir}/HashTools.h
-                               ${first_server_src_dir}/JwtToken.cpp
-                               ${first_server_src_dir}/JwtToken.h
-                               ${first_server_src_dir}/WorkWithPostgreSQL.cpp
-                               ${first_server_src_dir}/WorkWithPostgreSQL.h
-                               ${first_server_src_dir}/ResponseSender.cpp
-                               ${first_server_src_dir}/ResponseSender.h
-                               ${first_server_src_dir}/WorkWithClient.h
-                               ${first_server_src_dir}/WorkWithClient.cpp
-                               ${first_server_src_dir}/MyServer.cpp
-                               ${first_server_src_dir}/MyServer.h
-)
-
-source_group(TREE ${first_server_src_dir} 
+source_group(TREE ${content_server_src_dir} 
     PREFIX "src"
-    FILES ${ALL_FIRST_SERVER_SRC}
+    FILES ${ALL_CONTENT_SERVER_SRC}
 )
 
-add_executable(${TARGET_NAME} ${MAIN_SRC} ${ALL_FIRST_SERVER_SRC})
+add_executable(${TARGET_NAME} ${ALL_CONTENT_SERVER_SRC})
 
 #include surs directories
-target_include_directories(${TARGET_NAME} PRIVATE ${first_server_src_dir})
+target_include_directories(${TARGET_NAME} PRIVATE ${content_server_src_dir})
 
 #include lib directories
-target_include_directories(${TARGET_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
-target_include_directories(${TARGET_NAME} PRIVATE "${libpqxx_DIR}/include")
 target_include_directories(${TARGET_NAME} PRIVATE "${libsodium_DIR}/include")
 
 target_link_libraries(

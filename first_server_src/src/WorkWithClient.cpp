@@ -1,8 +1,8 @@
 #include <iostream>
 #include <memory>
-#include "WorkWithClient.h"
-#include "Request.h"
-#include "WorkWithPostgreSQL.h"
+#include "WorkWithClient.hpp"
+#include "Request.hpp"
+#include "WorkWithPostgreSQL.hpp"
 #include "cstring"
 
 WorkWithClient::WorkWithClient(SOCKET clientSocket, const std::string& clientAddress)

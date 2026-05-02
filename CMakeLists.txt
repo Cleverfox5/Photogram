@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
 
-set(TARGET_NAME Photogram)
-project(${TARGET_NAME})
+project(Photogram)
+
+set(TARGET_CONTENT_SERVER content_server)
+set(TARGET_AUTH_SERVER auth_server)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -40,34 +42,35 @@ set(Boost_ROOT ${LIB_PLACE}/boost/boost_1_89_0)
 find_package(Boost 1.89 REQUIRED)
 link_directories(${Boost_LIBRARY_DIRS})
 
-set(second_server_dir ${CMAKE_SOURCE_DIR}/second_server_src)
+set(content_server_dir ${CMAKE_SOURCE_DIR}/content_server_src)
 
 #src
-file(GLOB_RECURSE ALL_SECOND_SERVER_SRC ${second_server_dir}/*.[hc]pp)
+file(GLOB_RECURSE ALL_CONTENT_SERVER_SRC ${content_server_dir}/*.[hc]pp)
+#file(GLOB_RECURSE ALL_)
 
-source_group(TREE ${second_server_dir} 
+source_group(TREE ${content_server_dir} 
     PREFIX "src"
-    FILES ${ALL_SECOND_SERVER_SRC}
+    FILES ${ALL_CONTENT_SERVER_SRC}
 )
 
-add_executable(${TARGET_NAME} ${ALL_SECOND_SERVER_SRC})
+add_executable(${TARGET_CONTENT_SERVER} ${ALL_CONTENT_SERVER_SRC})
 
 #include surs directories
-target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir})
-target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir}/AnotherServerConnection)
-target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir}/DBclient)
-target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir}/FormDataParser)
-target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir}/FormRequest)
-target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir}/TcpConnection)
-target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir}/TcpServer)
-target_include_directories(${TARGET_NAME} PRIVATE ${second_server_dir}/FormResponse)
+target_include_directories(${TARGET_CONTENT_SERVER} PRIVATE ${content_server_dir})
+target_include_directories(${TARGET_CONTENT_SERVER} PRIVATE ${content_server_dir}/AnotherServerConnection)
+target_include_directories(${TARGET_CONTENT_SERVER} PRIVATE ${content_server_dir}/DBclient)
+target_include_directories(${TARGET_CONTENT_SERVER} PRIVATE ${content_server_dir}/FormDataParser)
+target_include_directories(${TARGET_CONTENT_SERVER} PRIVATE ${content_server_dir}/FormRequest)
+target_include_directories(${TARGET_CONTENT_SERVER} PRIVATE ${content_server_dir}/TcpConnection)
+target_include_directories(${TARGET_CONTENT_SERVER} PRIVATE ${content_server_dir}/TcpServer)
+target_include_directories(${TARGET_CONTENT_SERVER} PRIVATE ${content_server_dir}/FormResponse)
 
 #include lib directories
-target_include_directories(${TARGET_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
+target_include_directories(${TARGET_CONTENT_SERVER} PRIVATE ${Boost_INCLUDE_DIRS})
 
 #link
 target_link_libraries(
-    ${TARGET_NAME} 
+    ${TARGET_CONTENT_SERVER} 
     PRIVATE 
     nlohmann_json::nlohmann_json
     jwt-cpp::jwt-cpp
@@ -75,4 +78,4 @@ target_link_libraries(
 )
 
 #settings for VS
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${TARGET_NAME})
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${TARGET_CONTENT_SERVER})

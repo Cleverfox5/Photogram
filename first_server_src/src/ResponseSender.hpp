@@ -2,8 +2,8 @@
 #include <WinSock2.h>
 #include <string>
 #include <nlohmann/json.hpp>
-#include "Request.h"
-#include "WorkWithPostgreSQL.h"
+#include "Request.hpp"
+#include "WorkWithPostgreSQL.hpp"
 
 class ResponseSender {
 	Request utils;
