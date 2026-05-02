@@ -47,7 +47,7 @@ source_group(TREE ${content_server_src_dir}
 
 add_executable(${TARGET_NAME} ${ALL_CONTENT_SERVER_SRC})
 
-#include surs directories
+#include src directories
 target_include_directories(${TARGET_NAME} PRIVATE ${content_server_src_dir})
 
 #include lib directories
