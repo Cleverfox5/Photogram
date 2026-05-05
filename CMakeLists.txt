@@ -114,6 +114,10 @@ target_link_libraries(
     ${SODIUM_LIB}
 )
 
+if(MSVC)
+    target_link_options(${TARGET_AUTH_SERVER} PRIVATE /NODEFAULTLIB:LIBCMT)
+endif()
+
 #settings for VS
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${TARGET_CONTENT_SERVER})
 target_compile_definitions(${TARGET_AUTH_SERVER} PRIVATE SODIUM_STATIC)
