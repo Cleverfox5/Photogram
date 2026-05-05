@@ -1,4 +1,4 @@
-#include "HashTools.h"
+#include "HashTools.hpp"
 #include <sodium.h>
 #include <iostream>
 

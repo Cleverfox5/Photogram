@@ -1,10 +1,10 @@
-#include "ResponseSender.h"
+#include "ResponseSender.hpp"
 #include <iostream>
 
 ResponseSender::ResponseSender(SOCKET socket) : clientSocket(socket) {}
 
 void ResponseSender::sendAnswerOK(std::string& request, nlohmann::json & jsonBody) {
-	std::string clientAddres = utils.getValueSomeHeader(request, "Origin: ");
+	std::string clientAddres = *utils.getValueSomeHeader(request, "Origin: ");
 	std::string body = jsonBody.dump();
 	std::string response = "HTTP/1.1 200 OK\r\n"
 		"Version: HTTP/1.1\r\n"
@@ -19,7 +19,7 @@ void ResponseSender::sendAnswerOK(std::string& request, nlohmann::json & jsonBod
 }
 
 void ResponseSender::sendAnswerOK(std::string& request) {
-	std::string clientAddres = utils.getValueSomeHeader(request, "Origin: ");
+	std::string clientAddres = *utils.getValueSomeHeader(request, "Origin: ");
 	std::string response = "HTTP/1.1 200 OK\r\n"
 		"Version: HTTP/1.1\r\n"
 		"Access-Control-Allow-Origin: " + clientAddres + "\r\n"
@@ -30,7 +30,7 @@ void ResponseSender::sendAnswerOK(std::string& request) {
 }
 
 void ResponseSender::sendAnswerOK(std::string& request, std::string refreshToken, std::string accessToken, std::string nickname) {
-	std::string clientAddres = utils.getValueSomeHeader(request, "Origin: ");
+	std::string clientAddres = *utils.getValueSomeHeader(request, "Origin: ");
 	nlohmann::json jsonBody;
 	jsonBody["accessToken"] = accessToken;
 	jsonBody["nickname"] = nickname;
@@ -62,20 +62,18 @@ void ResponseSender::sendAnswerOKBinData(std::string& request, std::string type,
 	request.clear();
 }
 
-void ResponseSender::sendAnswerOptions(std::string& request) {
-	std::string clientAddres = utils.getValueSomeHeader(request, "Origin: ");
+void ResponseSender::sendAnswerOptions(const std::string& origin) {
 	std::string response = "HTTP/1.1 204 No Content\r\n"
-		"Access-Control-Allow-Origin: " + clientAddres + "\r\n"
+		"Access-Control-Allow-Origin: " + origin + "\r\n"
 		"Access-Control-Allow-Methods: POST, GET, OPTIONS\r\n"
 		"Access-Control-Allow-Headers: Content-Type, Authorization\r\n"
 		"Access-Control-Allow-Credentials: true\r\n"
 		"\r\n";
 	send(clientSocket, response.c_str(), response.size(), 0);
-	request.clear();
 }
 
 void ResponseSender::sendError(std::string& request, std::string errorCode, std::string textError) {
-	std::string clientAddres = utils.getValueSomeHeader(request, "Origin: ");
+	std::string clientAddres = *utils.getValueSomeHeader(request, "Origin: ");
 	nlohmann::json bodyJson;
 	bodyJson["error"] = textError;
 	std::string body = bodyJson.dump();

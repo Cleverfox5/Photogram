@@ -1,10 +1,10 @@
 #pragma once
-#include "FormData.h"
+#include "FormData.hpp"
 #include <nlohmann/json.hpp>
 #include <memory>
 #include <unordered_map>
 #include <pqxx/pqxx>
-#include "HashTools.h"
+#include "HashTools.hpp"
 
 class WorkWithPostgreSQL {
 	FormData formData;

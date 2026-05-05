@@ -1,8 +1,8 @@
-#include "FormData.h"
+#include "FormData.hpp"
 #include <iostream>
 
 std::string FormData::getSeparator(std::string & request) {
-	return "--" + utils.getValueSomeHeader(request, "boundary=-");
+	return "--" + *utils.getValueSomeHeader(request, "boundary=-");
 }
 
 void FormData::parse(std::string& request,

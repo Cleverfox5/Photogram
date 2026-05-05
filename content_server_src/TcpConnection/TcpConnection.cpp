@@ -33,7 +33,7 @@ void TcpConnection::handleRequest() {
                 boost::asio::placeholders::bytes_transferred));
     }
     else if (request_.method() == http::verb::get) {
-        const std::string connection_str = "host = localhost port = 5432 dbname = MessengerPhotogram user = postgres password = Postgre123password";
+        const std::string connection_str = "host = localhost port = 5432 dbname = photogram user = postgres password = 1";
         dbclient_ = std::make_shared<DBclient>(connection_str);
         std::string accesstoken = request_["Authorization"];
 
@@ -69,7 +69,7 @@ void TcpConnection::handleRequest() {
                     shared_on_self->response_.prepare_payload();
                 }
                 else {
-                    const std::string connection_str = "host = localhost port = 5432 dbname = MessengerPhotogram user = postgres password = Postgre123password";
+                    const std::string connection_str = "host = localhost port = 5432 dbname = photogram user = postgres password = 1";
                     shared_on_self->dbclient_ = std::make_shared<DBclient>(connection_str);
 
                     std::string target = shared_on_self->request_.target();
@@ -180,7 +180,7 @@ void TcpConnection::handleRequest() {
                 }
                 else {
                     try {
-                        const std::string connection_str = "host = localhost port = 5432 dbname = MessengerPhotogram user = postgres password = Postgre123password";
+                        const std::string connection_str = "host = localhost port = 5432 dbname = photogram user = postgres password = 1";
                         shared_on_self->dbclient_ = std::make_shared<DBclient>(connection_str);
 
                         std::string target = shared_on_self->request_.target();
@@ -203,7 +203,7 @@ void TcpConnection::handleRequest() {
 
                         FormResponse::formResponseOk(shared_on_self->response_, shared_on_self->client_addres);
                     }
-                    catch (const std::exception & e) {
+                    catch (const std::exception& e) {
                         std::cerr << e.what() << std::endl;
                         if (!std::strcmp(e.what(), "400")) {
                             FormResponse::formResponseError(shared_on_self->response_, shared_on_self->client_addres, http::status::bad_request);

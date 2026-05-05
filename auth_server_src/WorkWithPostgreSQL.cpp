@@ -1,5 +1,5 @@
 #pragma warning(disable : 4996)
-#include "WorkWithPostgreSQL.h"
+#include "WorkWithPostgreSQL.hpp"
 #include <iostream>
 #include <jwt-cpp/jwt.h>
 

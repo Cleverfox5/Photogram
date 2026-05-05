@@ -1,8 +1,9 @@
 #include <iostream>
 #include <memory>
-#include "WorkWithClient.h"
-#include "Request.h"
-#include "WorkWithPostgreSQL.h"
+#include "WorkWithClient.hpp"
+#include "Request.hpp"
+#include "WorkWithPostgreSQL.hpp"
+#include "HttpParser.hpp"
 #include "cstring"
 
 WorkWithClient::WorkWithClient(SOCKET clientSocket, const std::string& clientAddress)
@@ -35,133 +36,153 @@ void WorkWithClient::run() {
 	while ((bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0)) > 0) {
 		request.append(buffer, bytesRead);
 
-		//std::cout << request << std::endl;
+		std::cout << request << "\n\n";
 
-		if (request.size() > sizeof("OPTIONS") && request.substr(0, sizeof("OPTIONS") - 1) == "OPTIONS") {
-			if (request.find("\r\n\r\n") != std::string::npos)
-				sendResponse.sendAnswerOptions(request);
+		HttpParser::http_types_info info_block;
+		auto status = HttpParser::parse(request, info_block);
+
+		if (status == HttpParser::e_status::not_full_req)
+			continue;
+		
+		if (status == HttpParser::e_status::bad_http || status == HttpParser::e_status::not_support_type)
+		{
+			request.clear();
+			continue;
 		}
-		else if (request.size() > sizeof("POST") && request.substr(0, sizeof("POST") - 1) == "POST") {
-			size_t headersEnd;
-			if ((headersEnd = request.find("\r\n\r\n")) != std::string::npos) {
-				size_t bodySize = (request.size() - 1) - (headersEnd + (sizeof("\r\n\r\n") - 1)) + 1;
-				if (bodySize == std::stoi(utilsRequest.getValueSomeHeader(request, "Content-Length: "))) {
-					if (request.substr(5, sizeof("/login") - 1) == "/login") {
-						std::string body = request.substr(headersEnd + sizeof("\r\n\r\n") - 1);
-						nlohmann::json jsonBody;
-						std::string id;
-						try { 
-							jsonBody = nlohmann::json::parse(body);
-							id = dbAPI->checkPassword(jsonBody["login"], jsonBody["password"]);
 
-							std::string refreshToken = token.createRefreshToken(id, secret);
-							std::string accessToken = token.createAccessToken(id, secret);
+		if (std::holds_alternative<HttpParser::options_t_info>(info_block))
+		{
+			auto& options_info = std::get<HttpParser::options_t_info>(info_block);
+			sendResponse.sendAnswerOptions(options_info.origin);
+		}
+		else if (std::holds_alternative<HttpParser::post_t_info>(info_block))
+		{
+			auto& post_info = std::get<HttpParser::post_t_info>(info_block);
 
-							std::string nickname = dbAPI->getNicknameById(id);
-							
-							sendResponse.sendAnswerOK(request, refreshToken, accessToken, nickname);
-						}
-						catch (const std::exception& e) {
-							std::cerr << e.what() << std::endl;
-							if (!std::strcmp(e.what(), "Invalid login or password"))
-								sendResponse.sendError(request, "401", "Invalid login or password");
-							else
-								sendResponse.sendError(request, "500", "Internal Server Error");
-						}
-					}
-					else if (request.substr(5, sizeof("/authorization") - 1) == "/authorization") {
-						std::cout << "request to registration was getting\n";
-						nlohmann::json registrAnswerJson;
-						try {
-							std::string id = dbAPI->addNewUser(request, registrAnswerJson);
+			const std::string separator = "\r\n\r\n";
+			auto headersEnd = request.find(separator);
+			
+			if (request.substr(5, sizeof("/login") - 1) == "/login") {
+				std::string body = request.substr(headersEnd + sizeof("\r\n\r\n") - 1);
+				nlohmann::json jsonBody;
+				std::string id;
+				try {
+					jsonBody = nlohmann::json::parse(body);
+					id = dbAPI->checkPassword(jsonBody["login"], jsonBody["password"]);
 
-							sendResponse.sendAnswerOK(request);
-						}
-						catch (const std::exception& e) {
-							std::cerr << e.what() << std::endl;
-							if (!std::strcmp(e.what(), "This email is already occupied") || !std::strcmp(e.what(), "The nickname is already occupied"))
-								sendResponse.sendError(request, "401", e.what());
-							else
-								sendResponse.sendError(request, "500", "Internal Server Error");
-						}
-					}
-					else if (request.substr(5, sizeof("/updateProfilePhoto") - 1) == "/updateProfilePhoto") {
-						std::cout << "request to registration was getting\n";
-						std::string body = request.substr(headersEnd + sizeof("\r\n\r\n") - 1);
-						std::string id;
-						try {
-							id = checkAccesstoken(request, token, utilsRequest, sendResponse);
-						}
-						catch (const std::exception& e) { continue; }
+					std::string refreshToken = token.createRefreshToken(id, secret);
+					std::string accessToken = token.createAccessToken(id, secret);
 
-						try {
-							dbAPI->updateProfilePhoto(request, id);
+					std::string nickname = dbAPI->getNicknameById(id);
 
-							sendResponse.sendAnswerOK(request);
-						}
-						catch (const std::exception& e) {
-							std::cerr << e.what() << std::endl;
-							if (!std::strcmp(e.what(), "This email is already occupied") || !std::strcmp(e.what(), "The nickname is already occupied"))
-								sendResponse.sendError(request, "400", e.what());
-							else if (!std::strcmp(e.what(), "400")) {
-								sendResponse.sendError(request, "400", "Bad request");
-							}
-							else
-								sendResponse.sendError(request, "500", "Internal Server Error");
-						}
-					}
-					else if (request.substr(5, sizeof("/updateProfileData") - 1) == "/updateProfileData") {
-						std::cout << "request to registration was getting\n";
-						std::string body = request.substr(headersEnd + sizeof("\r\n\r\n") - 1);
-						nlohmann::json jsonBody;
-						std::string id;
-						try {
-							id = checkAccesstoken(request, token, utilsRequest, sendResponse);
-						}
-						catch (const std::exception& e) { continue; }
-
-						try {
-							jsonBody = nlohmann::json::parse(body);
-							
-							
-							dbAPI->updateProfileData(jsonBody, id);
-							
-							sendResponse.sendAnswerOK(request);
-						}
-						catch (const std::exception& e) {
-							std::cerr << e.what() << std::endl;
-							if (!std::strcmp(e.what(), "This email is already occupied") || !std::strcmp(e.what(), "The nickname is already occupied"))
-								sendResponse.sendError(request, "400", e.what());
-							else
-								sendResponse.sendError(request, "500", "Internal Server Error");
-						}
-					}
-					else if (request.substr(5, sizeof("/updateProfilePassword") - 1) == "/updateProfilePassword") {
-						std::cout << "request to registration was getting\n";
-						std::string body = request.substr(headersEnd + sizeof("\r\n\r\n"), request.size() - (headersEnd + sizeof("\r\n\r\n")) - 1);
-						std::string id;
-						try {
-							id = checkAccesstoken(request, token, utilsRequest, sendResponse);
-						}
-						catch (const std::exception& e) { continue; }
-
-						try {
-							dbAPI->updateProfilePassword(body, id);
-
-							sendResponse.sendAnswerOK(request);
-						}
-						catch (const std::exception& e) {
-							std::cerr << e.what() << std::endl;
-							if (!std::strcmp(e.what(), "This email is already occupied") || !std::strcmp(e.what(), "The nickname is already occupied"))
-								sendResponse.sendError(request, "400", e.what());
-							else
-								sendResponse.sendError(request, "500", "Internal Server Error");
-						}
-					}
+					sendResponse.sendAnswerOK(request, refreshToken, accessToken, nickname);
+				}
+				catch (const std::exception& e) {
+					std::cerr << e.what() << std::endl;
+					if (!std::strcmp(e.what(), "Invalid login or password"))
+						sendResponse.sendError(request, "401", "Invalid login or password");
+					else
+						sendResponse.sendError(request, "500", "Internal Server Error");
 				}
 			}
+			else if (request.substr(5, sizeof("/registration") - 1) == "/registration") {
+				std::cout << "request to registration was getting\n";
+				nlohmann::json registrAnswerJson;
+				try {
+					std::string id = dbAPI->addNewUser(request, registrAnswerJson);
+
+					sendResponse.sendAnswerOK(request);
+				}
+				catch (const std::exception& e) {
+					std::cerr << e.what() << std::endl;
+					if (!std::strcmp(e.what(), "This email is already occupied") || !std::strcmp(e.what(), "The nickname is already occupied"))
+						sendResponse.sendError(request, "401", e.what());
+					else
+						sendResponse.sendError(request, "500", "Internal Server Error");
+				}
+			}
+			else if (request.substr(5, sizeof("/updateProfilePhoto") - 1) == "/updateProfilePhoto") {
+				std::cout << "request to registration was getting\n";
+				std::string body = request.substr(headersEnd + sizeof("\r\n\r\n") - 1);
+				std::string id;
+				try {
+					id = checkAccesstoken(request, token, utilsRequest, sendResponse);
+				}
+				catch (const std::exception& e) { continue; }
+
+				try {
+					dbAPI->updateProfilePhoto(request, id);
+
+					sendResponse.sendAnswerOK(request);
+				}
+				catch (const std::exception& e) {
+					std::cerr << e.what() << std::endl;
+					if (!std::strcmp(e.what(), "This email is already occupied") || !std::strcmp(e.what(), "The nickname is already occupied"))
+						sendResponse.sendError(request, "400", e.what());
+					else if (!std::strcmp(e.what(), "400")) {
+						sendResponse.sendError(request, "400", "Bad request");
+					}
+					else
+						sendResponse.sendError(request, "500", "Internal Server Error");
+				}
+			}
+			else if (request.substr(5, sizeof("/updateProfileData") - 1) == "/updateProfileData") {
+				std::cout << "request to registration was getting\n";
+				std::string body = request.substr(headersEnd + sizeof("\r\n\r\n") - 1);
+				nlohmann::json jsonBody;
+				std::string id;
+				try {
+					id = checkAccesstoken(request, token, utilsRequest, sendResponse);
+				}
+				catch (const std::exception& e) { continue; }
+
+				try {
+					jsonBody = nlohmann::json::parse(body);
+
+
+					dbAPI->updateProfileData(jsonBody, id);
+
+					sendResponse.sendAnswerOK(request);
+				}
+				catch (const std::exception& e) {
+					std::cerr << e.what() << std::endl;
+					if (!std::strcmp(e.what(), "This email is already occupied") || !std::strcmp(e.what(), "The nickname is already occupied"))
+						sendResponse.sendError(request, "400", e.what());
+					else
+						sendResponse.sendError(request, "500", "Internal Server Error");
+				}
+			}
+			else if (request.substr(5, sizeof("/updateProfilePassword") - 1) == "/updateProfilePassword") {
+				std::cout << "request to registration was getting\n";
+				std::string body = request.substr(headersEnd + sizeof("\r\n\r\n"), request.size() - (headersEnd + sizeof("\r\n\r\n")) - 1);
+				std::string id;
+				try {
+					id = checkAccesstoken(request, token, utilsRequest, sendResponse);
+				}
+				catch (const std::exception& e) { continue; }
+
+				try {
+					dbAPI->updateProfilePassword(body, id);
+
+					sendResponse.sendAnswerOK(request);
+				}
+				catch (const std::exception& e) {
+					std::cerr << e.what() << std::endl;
+					if (!std::strcmp(e.what(), "This email is already occupied") || !std::strcmp(e.what(), "The nickname is already occupied"))
+						sendResponse.sendError(request, "400", e.what());
+					else
+						sendResponse.sendError(request, "500", "Internal Server Error");
+				}
+			}
+			
 		}
-		else if (request.size() > sizeof("GET") && request.substr(0, sizeof("GET") - 1) == "GET") {
+		else if (std::holds_alternative<HttpParser::get_t_info>(info_block))
+		{
+
+		}
+
+
+		if (request.size() > sizeof("GET") && request.substr(0, sizeof("GET") - 1) == "GET") {
 			if (request.find("\r\n\r\n") != std::string::npos) {
 				if (request.substr(4, sizeof("/getNewToken") - 1) == "/getNewToken") {
 					try {
@@ -184,7 +205,7 @@ void WorkWithClient::run() {
 						id = checkAccesstoken(request, token, utilsRequest, sendResponse);
 					}
 					catch (const std::exception& e) { continue; }
-					
+
 					size_t nicknameStart = 4 + sizeof("/getProfileByNickname?nickname=") - 1;
 					size_t nicknameEnd = request.find(" ", nicknameStart) - 1;
 					std::string nickname = request.substr(nicknameStart, nicknameEnd - nicknameStart + 1);
@@ -192,10 +213,10 @@ void WorkWithClient::run() {
 						nlohmann::json body = dbAPI->getProfileInformation(nickname);
 						sendResponse.sendAnswerOK(request, body);
 					}
-					catch (const std::exception & e) {
-						if (!std::strcmp(e.what(), "404")) 
+					catch (const std::exception& e) {
+						if (!std::strcmp(e.what(), "404"))
 							sendResponse.sendError(request, "404", "Not found");
-						else 
+						else
 							sendResponse.sendError(request, "500", "Internal Server Error");
 					}
 				}
@@ -215,10 +236,10 @@ void WorkWithClient::run() {
 						std::vector<char> binData = dbAPI->getProfilePhoto(nickname, type);
 						sendResponse.sendAnswerOKBinData(request, type, binData);
 					}
-					catch (const std::exception & e) {
-						if (!std::strcmp(e.what(), "404")) 
+					catch (const std::exception& e) {
+						if (!std::strcmp(e.what(), "404"))
 							sendResponse.sendError(request, "404", "Not found");
-						else 
+						else
 							sendResponse.sendError(request, "500", "Internal Server Error");
 					}
 				}
@@ -229,7 +250,7 @@ void WorkWithClient::run() {
 						id = checkAccesstoken(request, token, utilsRequest, sendResponse);
 					}
 					catch (const std::exception& e) { continue; }
-					
+
 					try {
 						nlohmann::json json;
 
@@ -237,7 +258,7 @@ void WorkWithClient::run() {
 						dbAPI->getUsers(properties, json, id);
 						sendResponse.sendAnswerOK(request, json);
 					}
-					catch (const std::exception & e) {
+					catch (const std::exception& e) {
 						if (!std::strcmp(e.what(), "bad http"))
 							sendResponse.sendError(request, "400", e.what());
 						else
@@ -255,7 +276,7 @@ void WorkWithClient::run() {
 					try {
 						utilsRequest.URLParser(request, properties, sizeof("GET ") - 1);
 						std::string id = properties.begin()->second;
-						
+
 						std::string type;
 						std::vector<char> binData = dbAPI->getPhotoById(id, type);
 						sendResponse.sendAnswerOKBinData(request, type, binData);
@@ -270,12 +291,12 @@ void WorkWithClient::run() {
 				else if (request.substr(4, sizeof("/makeFriend") - 1) == "/makeFriend") {
 					std::string id;
 					std::unordered_map<std::string, std::string> properties;
-					
+
 					try {
 						id = checkAccesstoken(request, token, utilsRequest, sendResponse);
 					}
-					catch(const std::exception & e) {continue;}
-						
+					catch (const std::exception& e) { continue; }
+
 					try {
 						nlohmann::json json;
 						utilsRequest.URLParser(request, properties, sizeof("GET ") - 1);
@@ -297,8 +318,8 @@ void WorkWithClient::run() {
 					try {
 						id = checkAccesstoken(request, token, utilsRequest, sendResponse);
 					}
-					catch(const std::exception & e) {continue;}
-						
+					catch (const std::exception& e) { continue; }
+
 					std::unordered_map<std::string, std::string> properties;
 					try {
 						nlohmann::json json;
@@ -358,6 +379,9 @@ void WorkWithClient::run() {
 				}
 			}
 		}
+
+		
+		request.clear();
 	}
 	if (clientSocket != INVALID_SOCKET) {
 		closesocket(clientSocket);
