@@ -45,13 +45,15 @@ void Request::URLParser(std::string& httpString, std::unordered_map<std::string,
 	result[httpString.substr(properStart, separator - properStart)] = httpString.substr(separator + 1, p - separator - 1);
 }
 
-std::string Request::getValueSomeHeader(std::string & request, std::string header, size_t startSerch) {
+std::optional<std::string> Request::getValueSomeHeader(std::string_view request, std::string_view header, size_t startSerch) {
 	size_t positonHeader;
-	if ((positonHeader = request.find(header, startSerch)) == std::string::npos)
-		throw std::runtime_error("Не удалось найти");
+	positonHeader = request.find(header, startSerch);
+	if (positonHeader == std::string::npos)
+		return std::nullopt;
+
 	size_t positonEndHeader = request.find("\r\n", positonHeader);
 	size_t startPositon = positonHeader + header.size() - 1;
-	return request.substr(startPositon, positonEndHeader - startPositon);
+	return std::string(request.substr(startPositon, positonEndHeader - startPositon));
 }
 
 std::string Request::getValueWithSpace(std::string& request, std::string header, size_t startSerch) {

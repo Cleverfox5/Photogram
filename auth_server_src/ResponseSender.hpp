@@ -14,7 +14,7 @@ public:
 	void sendAnswerOK(std::string& request, nlohmann::json& jsonBody);
 	void sendAnswerOK(std::string& request, std::string refreshToken, std::string accessToken, std::string nickname);
 	void sendAnswerOKBinData(std::string& request, std::string type, std::vector<char>& binData);
-	void sendAnswerOptions(std::string& request);
+	void sendAnswerOptions(const std::string& origin);
 	void sendError(std::string& request, std::string errorCode, std::string textEror);
 };
 /*
