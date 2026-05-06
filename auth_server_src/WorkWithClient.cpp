@@ -104,7 +104,7 @@ void WorkWithClient::run() {
 				std::cout << "request to registration was getting\n";
 				std::string id;
 				try {
-					id = checkAccesstoken(request, sendResponse);
+					id = checkAccesstoken(post_info.origin, post_info.accessToken, sendResponse);
 				}
 				catch (const std::exception& e) { continue; }
 
@@ -129,7 +129,7 @@ void WorkWithClient::run() {
 			{
 				std::string id;
 				try {
-					id = checkAccesstoken(request, sendResponse);
+					id = checkAccesstoken(request, post_info.accessToken, sendResponse);
 				}
 				catch (const std::exception& e) { continue; }
 
@@ -152,7 +152,7 @@ void WorkWithClient::run() {
 				std::string hashed_password = post_info.jsonBody.get<std::string>();
 				std::string id;
 				try {
-					id = checkAccesstoken(request, sendResponse);
+					id = checkAccesstoken(post_info.origin, post_info.accessToken, sendResponse);
 				}
 				catch (const std::exception& e) { continue; }
 
@@ -178,11 +178,21 @@ void WorkWithClient::run() {
 		{
 			auto& get_info = std::get<HttpParser::get_t_info>(info_block);
 
+			std::string id;
+			if (get_info.msg != HttpParser::e_get_msg::get_new_token)
+			{
+				try 
+				{
+					id = checkAccesstoken(get_info.origin, get_info.accessToken, sendResponse);
+				}
+				catch (const std::exception& e) { continue; }
+			}
+
 			switch (get_info.msg)
 			{
 			case(HttpParser::e_get_msg::get_new_token):
 				try {
-					std::string id = JwtToken::checkRefreshToken(get_info.refreshToken, secret);
+					id = JwtToken::checkRefreshToken(get_info.refreshToken, secret);
 					std::string accessToken = JwtToken::createAccessToken(id, secret);
 					std::string nickname = dbAPI->getNicknameById(id);
 
@@ -195,12 +205,6 @@ void WorkWithClient::run() {
 				break;
 			case(HttpParser::e_get_msg::get_profile_by_nickname):
 			{
-				std::string id;
-				try {
-					id = checkAccesstoken(request, sendResponse);
-				}
-				catch (const std::exception& e) { continue; }
-
 				size_t nicknameStart = 4 + sizeof("/getProfileByNickname?nickname=") - 1;
 				size_t nicknameEnd = request.find(" ", nicknameStart) - 1;
 				std::string nickname = request.substr(nicknameStart, nicknameEnd - nicknameStart + 1);
@@ -218,12 +222,6 @@ void WorkWithClient::run() {
 				break;
 			case(HttpParser::e_get_msg::get_profile_photo):
 			{
-				std::string id;
-				try {
-					id = checkAccesstoken(request, sendResponse);
-				}
-				catch (const std::exception& e) { continue; }
-
 				size_t nicknameStart = 4 + sizeof("/getProfilePhoto?nickname=") - 1;
 				size_t nicknameEnd = request.find(" ", nicknameStart) - 1;
 				std::string nickname = request.substr(nicknameStart, nicknameEnd - nicknameStart + 1);
@@ -243,12 +241,6 @@ void WorkWithClient::run() {
 			case(HttpParser::e_get_msg::get_users_list):
 			{
 				std::unordered_map<std::string, std::string> properties;
-				std::string id;
-				try {
-					id = checkAccesstoken(request, sendResponse);
-				}
-				catch (const std::exception& e) { continue; }
-
 				try {
 					nlohmann::json json;
 
@@ -266,12 +258,6 @@ void WorkWithClient::run() {
 				break;
 			case(HttpParser::e_get_msg::get_photo_by_id):
 			{
-				std::string id;
-				try {
-					id = checkAccesstoken(request, sendResponse);
-				}
-				catch (const std::exception& e) { continue; }
-
 				std::unordered_map<std::string, std::string> properties;
 				try {
 					Request::URLParser(request, properties, sizeof("GET ") - 1);
@@ -291,13 +277,7 @@ void WorkWithClient::run() {
 				break;
 			case(HttpParser::e_get_msg::make_friend):
 			{
-				std::string id;
 				std::unordered_map<std::string, std::string> properties;
-
-				try {
-					id = checkAccesstoken(request, sendResponse);
-				}
-				catch (const std::exception& e) { continue; }
 
 				try {
 					nlohmann::json json;
@@ -318,12 +298,6 @@ void WorkWithClient::run() {
 				break;
 			case(HttpParser::e_get_msg::delete_friend):
 			{
-				std::string id;
-				try {
-					id = checkAccesstoken(request, sendResponse);
-				}
-				catch (const std::exception& e) { continue; }
-
 				std::unordered_map<std::string, std::string> properties;
 				try {
 					nlohmann::json json;
@@ -345,11 +319,6 @@ void WorkWithClient::run() {
 			case(HttpParser::e_get_msg::get_status):
 			{
 				std::unordered_map<std::string, std::string> properties;
-				std::string id;
-				try {
-					id = checkAccesstoken(request, sendResponse);
-				}
-				catch (const std::exception& e) { continue; }
 
 				try {
 					nlohmann::json json;
@@ -370,12 +339,6 @@ void WorkWithClient::run() {
 				break;
 			case(HttpParser::e_get_msg::get_id_fs_by_access):
 			{
-				std::string id;
-				try {
-					id = checkAccesstoken(request, sendResponse);
-				}
-				catch (const std::exception& e) { continue; }
-
 				try {
 					nlohmann::json body;
 					body["id"] = id;
@@ -398,19 +361,18 @@ void WorkWithClient::run() {
 	}
 }
 
-std::string WorkWithClient::checkAccesstoken(std::string & request, ResponseSender & sendResponse) {
+std::string WorkWithClient::checkAccesstoken(std::string & origin, std::string& accessToken, ResponseSender & sendResponse) {
 	try {
-		std::string accessToken = Request::getValueWithSpace(request, "Bearer ");
 		std::string id = JwtToken::checkAccessToken(accessToken, secret);
 		return id;
 	}
 	catch (const std::exception& e) {
 		if (!std::strcmp(e.what(), "bad http"))
-			sendResponse.sendError(request, "400", e.what());
+			sendResponse.sendError(origin, "400", e.what());
 		if (!std::strcmp(e.what(), "invalid access token"))
-			sendResponse.sendError(request, "401", e.what());
+			sendResponse.sendError(origin, "401", e.what());
 		else
-			sendResponse.sendError(request, "500", "Internal Server Error");
+			sendResponse.sendError(origin, "500", "Internal Server Error");
 
 		throw;
 	}
