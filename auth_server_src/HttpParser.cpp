@@ -1,8 +1,11 @@
 #include "HttpParser.hpp"
 #include <optional>
 
-
-std::optional<HttpParser::http_req_t> HttpParser::get_req_t(std::string_view req)
+namespace HttpParser
+{
+namespace
+{
+std::optional<http_req_t> get_req_t(std::string_view req)
 {
     const size_t max_hdr_size = 7;
     if (req.size() < max_hdr_size)
@@ -27,43 +30,143 @@ std::optional<HttpParser::http_req_t> HttpParser::get_req_t(std::string_view req
     return http_req_t{ type, shift };
 }
 
-void HttpParser::parse_get_t()
+nlohmann::json get_body(std::string_view req)
 {
+    const std::string separator = "\r\n\r\n";
+    auto headersEnd = req.find(separator);
 
+    auto body = req.substr(headersEnd + separator.size());
+    return nlohmann::json::parse(body);
 }
 
-void HttpParser::parse_post_t()
+std::optional<e_post_msg> get_post_msg(std::string_view req)
 {
+    auto shift_start = req.find('/');
+    auto shift_end = req.substr(shift_start).find_first_of(" ?");
+    if (shift_end == std::string::npos || shift_start == std::string::npos)
+        return std::nullopt;
 
+    auto msg_t_str = std::string(req.substr(shift_start + 1, shift_end - shift_start));
+    auto msg_t_p = post_msg_names.find(msg_t_str);
+    if (msg_t_p == post_msg_names.end())
+        return std::nullopt;
+
+    return msg_t_p->second;
 }
 
-HttpParser::post_t_info HttpParser::parse_post_t(std::string_view req)
+std::optional<e_get_msg> get_get_msg(std::string_view req)
 {
-    HttpParser::post_t_info result;
-    
+    auto shift_start = req.find('/');
+    auto shift_end = req.substr(shift_start).find_first_of(" ?");
+    if (shift_end == std::string::npos || shift_start == std::string::npos)
+        return std::nullopt;
+
+    auto msg_t_str = std::string(req.substr(shift_start + 1, shift_end - shift_start));
+    auto msg_t_p = get_msg_names.find(msg_t_str);
+    if (msg_t_p == get_msg_names.end())
+        return std::nullopt;
+
+    return msg_t_p->second;
+}
+
+bool parse_get_t(std::string_view req, http_types_info& info_block)
+{
+    auto& get_info = info_block.emplace<get_t_info>();
+
     auto origin_o = Request::getValueSomeHeader(req, "Origin: ");
     if (!origin_o)
-        return result;
-    
-    result.origin = *origin_o;
+        return false;
+    get_info.origin = *origin_o;
 
-    return result;
+    auto msg_o = get_get_msg(req);
+    if (!msg_o)
+        return false;
+    get_info.msg = *msg_o;
+
+	switch (get_info.msg)
+	{
+	case(e_get_msg::get_new_token):
+        get_info.refreshToken = Request::getValueWithSpace(req, "refreshToken=");
+        break;
+	case(e_get_msg::get_profile_by_nickname):
+        get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+		break;
+	case(e_get_msg::get_profile_photo):
+        get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+		break;
+	case(e_get_msg::get_users_list):
+        get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+	    break;
+	case(e_get_msg::get_photo_by_id):
+        get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+	    break;
+	case(e_get_msg::make_friend):
+        get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+	    break;
+	case(e_get_msg::delete_friend):
+        get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+	    break;
+	case(e_get_msg::get_status):
+        get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+	    break;
+	case(e_get_msg::get_id_fs_by_access):
+        get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+	    break;
+	}
 }
 
-HttpParser::options_t_info HttpParser::parse_options_t(std::string_view req)
+bool parse_post_t(std::string_view req, http_types_info& info_block)
 {
-    HttpParser::options_t_info result;
-    
+    auto& post_info = info_block.emplace<post_t_info>();
+
     auto origin_o = Request::getValueSomeHeader(req, "Origin: ");
     if (!origin_o)
-        return result;
-    
-    result.origin = *origin_o;
+        return false;
+    post_info.origin = *origin_o;
 
-    return result;
+    auto msg_o = get_post_msg(req);
+    if (!msg_o)
+        return false;
+    post_info.msg = *msg_o;
+
+    switch(post_info.msg)
+    {
+    case(e_post_msg::login):
+        post_info.jsonBody = get_body(req);
+        
+        break;
+    case(e_post_msg::registration):
+        break;
+    case(e_post_msg::update_profile_photo):
+        post_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+        break;
+    case(e_post_msg::update_profile_data):
+        post_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+        post_info.jsonBody = get_body(req);
+        break;
+    case(e_post_msg::update_profile_password):
+        post_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+        post_info.jsonBody = get_body(req);
+        break;
+    }
+
+    return true;
 }
 
-HttpParser::e_status HttpParser::check_is_full_request(std::string_view requ, HttpParser::e_http_req type)
+bool parse_options_t(std::string_view req, http_types_info& info_block)
+{
+    auto& opt_info = info_block.emplace<options_t_info>();
+
+    auto origin_o = Request::getValueSomeHeader(req, "Origin: ");
+    if (!origin_o)
+        return false;
+
+    opt_info.origin = *origin_o;
+
+    return true;
+}
+
+e_status check_is_full_request(std::string_view requ, HttpParser::e_http_req type)
 {
     const std::string separator = "\r\n\r\n";
     auto headers_end = requ.find(separator);
@@ -86,8 +189,9 @@ HttpParser::e_status HttpParser::check_is_full_request(std::string_view requ, Ht
     return e_status::bad_http;
 }
 
+};
 
-HttpParser::e_status HttpParser::parse(std::string_view request, http_types_info & info_block)
+e_status parse(std::string_view request, http_types_info& info_block)
 {
     //getting the request code
     auto type = get_req_t(request);
@@ -101,16 +205,19 @@ HttpParser::e_status HttpParser::parse(std::string_view request, http_types_info
         return check_status;
 
     //processing of request fields
-    switch (type->type) 
+    switch (type->type)
     {
     case(e_http_req::get):
-        parse_get_t();
+        if (!parse_get_t(request.substr(shift), info_block))
+            return e_status::bad_http;
         break;
     case(e_http_req::post):
-        info_block = parse_post_t(request.substr(shift));
+        if (!parse_post_t(request.substr(shift), info_block))
+            return e_status::bad_http;
         break;
     case(e_http_req::options):
-        info_block = parse_options_t(request.substr(shift));
+        if (!parse_options_t(request.substr(shift), info_block))
+            return e_status::bad_http;
         break;
     default:
         return e_status::not_support_type;
@@ -118,3 +225,5 @@ HttpParser::e_status HttpParser::parse(std::string_view request, http_types_info
 
     return e_status::success;
 }
+
+};

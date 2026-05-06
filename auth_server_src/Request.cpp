@@ -56,13 +56,13 @@ std::optional<std::string> Request::getValueSomeHeader(std::string_view request,
 	return std::string(request.substr(startPositon, positonEndHeader - startPositon));
 }
 
-std::string Request::getValueWithSpace(std::string& request, std::string header, size_t startSerch) {
+std::string Request::getValueWithSpace(std::string_view request, std::string header, size_t startSerch) {
 	size_t positonHeader;
 	if ((positonHeader = request.find(header, startSerch)) == std::string::npos)
 		throw std::runtime_error("Не удалось найти");
 	size_t positonEndHeader = request.find("\r\n", positonHeader);
 	size_t startPositon = positonHeader + header.size();
-	return request.substr(startPositon, positonEndHeader - startPositon);
+	return std::string(request.substr(startPositon, positonEndHeader - startPositon));
 }
 
 std::string Request::getType(std::string & request, std::string header, size_t startSerch) {

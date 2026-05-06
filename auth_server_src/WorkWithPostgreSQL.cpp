@@ -209,7 +209,7 @@ std::string WorkWithPostgreSQL::checkPassword(std::string login, std::string pas
 		if (!hashTools->verify(password, hashPassword)) 
 			throw std::runtime_error("Invalid login or password");
 
-		return res[1].c_str();//если пароль неправильный, то вылетает исключение
+		return res[1].c_str();
 
 	} catch(const std::exception & e) {
 		std::cerr << e.what() << std::endl;

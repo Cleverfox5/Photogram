@@ -3,8 +3,7 @@
 
 ResponseSender::ResponseSender(SOCKET socket) : clientSocket(socket) {}
 
-void ResponseSender::sendAnswerOK(std::string& request, nlohmann::json & jsonBody) {
-	std::string clientAddres = *utils.getValueSomeHeader(request, "Origin: ");
+void ResponseSender::sendAnswerOK(std::string& clientAddres, nlohmann::json & jsonBody) {
 	std::string body = jsonBody.dump();
 	std::string response = "HTTP/1.1 200 OK\r\n"
 		"Version: HTTP/1.1\r\n"
@@ -14,23 +13,18 @@ void ResponseSender::sendAnswerOK(std::string& request, nlohmann::json & jsonBod
 		"\r\n\r\n";
 	response.append(body);
 	send(clientSocket, response.c_str(), response.size(), 0);
-	std::cout << response;
-	request.clear();
 }
 
-void ResponseSender::sendAnswerOK(std::string& request) {
-	std::string clientAddres = *utils.getValueSomeHeader(request, "Origin: ");
+void ResponseSender::sendAnswerOK(std::string& clientAddres) {
 	std::string response = "HTTP/1.1 200 OK\r\n"
 		"Version: HTTP/1.1\r\n"
 		"Access-Control-Allow-Origin: " + clientAddres + "\r\n"
 		"Content-Length: 0\r\n"
 		"\r\n";
 	send(clientSocket, response.c_str(), response.size(), 0);
-	request.clear();
 }
 
-void ResponseSender::sendAnswerOK(std::string& request, std::string refreshToken, std::string accessToken, std::string nickname) {
-	std::string clientAddres = *utils.getValueSomeHeader(request, "Origin: ");
+void ResponseSender::sendAnswerOK(std::string& clientAddres, std::string refreshToken, std::string accessToken, std::string nickname) {
 	nlohmann::json jsonBody;
 	jsonBody["accessToken"] = accessToken;
 	jsonBody["nickname"] = nickname;
@@ -44,11 +38,9 @@ void ResponseSender::sendAnswerOK(std::string& request, std::string refreshToken
 		"\r\n";
 	response.append(body);
 	send(clientSocket, response.c_str(), response.size(), 0);
-	request.clear();
 }
 
-void ResponseSender::sendAnswerOKBinData(std::string& request, std::string type, std::vector<char>& binData) {
-	std::string clientAddres = utils.getType(request, "Origin: ");
+void ResponseSender::sendAnswerOKBinData(std::string& clientAddres, std::string type, std::vector<char>& binData) {
 	std::string response = 
 		"HTTP/1.1 200 OK\r\n"
 		"Version: HTTP/1.1\r\n"
@@ -59,12 +51,11 @@ void ResponseSender::sendAnswerOKBinData(std::string& request, std::string type,
 		"\r\n\r\n";
 	send(clientSocket, response.c_str(), response.size(), 0);
 	send(clientSocket, binData.data(), binData.size(), 0);
-	request.clear();
 }
 
-void ResponseSender::sendAnswerOptions(const std::string& origin) {
+void ResponseSender::sendAnswerOptions(const std::string& clientAddres) {
 	std::string response = "HTTP/1.1 204 No Content\r\n"
-		"Access-Control-Allow-Origin: " + origin + "\r\n"
+		"Access-Control-Allow-Origin: " + clientAddres + "\r\n"
 		"Access-Control-Allow-Methods: POST, GET, OPTIONS\r\n"
 		"Access-Control-Allow-Headers: Content-Type, Authorization\r\n"
 		"Access-Control-Allow-Credentials: true\r\n"
@@ -72,8 +63,7 @@ void ResponseSender::sendAnswerOptions(const std::string& origin) {
 	send(clientSocket, response.c_str(), response.size(), 0);
 }
 
-void ResponseSender::sendError(std::string& request, std::string errorCode, std::string textError) {
-	std::string clientAddres = *utils.getValueSomeHeader(request, "Origin: ");
+void ResponseSender::sendError(std::string& clientAddres, std::string errorCode, std::string textError) {
 	nlohmann::json bodyJson;
 	bodyJson["error"] = textError;
 	std::string body = bodyJson.dump();
@@ -85,5 +75,4 @@ void ResponseSender::sendError(std::string& request, std::string errorCode, std:
 		"\r\n";
 	response.append(body);
 	send(clientSocket, response.c_str(), response.size(), 0);
-	request.clear();
 }
