@@ -91,27 +91,35 @@ bool parse_get_t(std::string_view req, http_types_info& info_block)
         break;
 	case(e_get_msg::get_profile_by_nickname):
         get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+        Request::URLParser(req, get_info.properties, sizeof("GET ") - 1);
 		break;
 	case(e_get_msg::get_profile_photo):
         get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+        Request::URLParser(req, get_info.properties, sizeof("GET ") - 1);
 		break;
 	case(e_get_msg::get_users_list):
         get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+        Request::URLParser(req, get_info.properties, sizeof("GET ") - 1);
 	    break;
 	case(e_get_msg::get_photo_by_id):
         get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+        Request::URLParser(req, get_info.properties, sizeof("GET ") - 1);
 	    break;
 	case(e_get_msg::make_friend):
         get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+        Request::URLParser(req, get_info.properties, sizeof("GET ") - 1);
 	    break;
 	case(e_get_msg::delete_friend):
         get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+        Request::URLParser(req, get_info.properties, sizeof("GET ") - 1);
 	    break;
 	case(e_get_msg::get_status):
         get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+        Request::URLParser(req, get_info.properties, sizeof("GET ") - 1);
 	    break;
 	case(e_get_msg::get_id_fs_by_access):
         get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+        Request::URLParser(req, get_info.properties, sizeof("GET ") - 1);
 	    break;
     }
 

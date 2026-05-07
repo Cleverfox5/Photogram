@@ -104,6 +104,8 @@ namespace HttpParser
 		e_get_msg msg;
 		std::string refreshToken;
 		std::string accessToken;
+
+		std::map<std::string, std::string> properties;
 	};
 
 	using http_types_info = std::variant<std::monostate, options_t_info, post_t_info, get_t_info>;

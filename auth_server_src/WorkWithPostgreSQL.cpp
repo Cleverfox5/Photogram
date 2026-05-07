@@ -303,7 +303,7 @@ std::string WorkWithPostgreSQL::addNewUser(HttpParser::post_t_info& post_info, n
 	}
 }
 
-void WorkWithPostgreSQL::getUsers(std::unordered_map<std::string, std::string>& properties, nlohmann::json& json, std::string id) {
+void WorkWithPostgreSQL::getUsers(std::map<std::string, std::string>& properties, nlohmann::json& json, std::string id) {
 	try {
 		pqxx::work work(*connect);
 		pqxx::result result;

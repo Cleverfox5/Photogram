@@ -28,7 +28,7 @@ public:
 	std::string checkPassword(std::string login, std::string password);
 	nlohmann::json getProfileInformation(std::string nickname);
 	std::vector<char> getProfilePhoto(std::string nickname, std::string& type);
-	void getUsers(std::unordered_map<std::string, std::string>& properties, nlohmann::json& json, std::string id);
+	void getUsers(std::map<std::string, std::string>& properties, nlohmann::json& json, std::string id);
 	std::vector<char> getPhotoById(std::string id, std::string& type);
 	void makeFriend(std::string & user_id, std::string & friend_id);
 	void deleteFriend(std::string& user_id, std::string& friend_id);

@@ -34,8 +34,6 @@ void WorkWithClient::run() {
 	while ((bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0)) > 0) {
 		request.append(buffer, bytesRead);
 
-		//std::cout << request << "\n\n";
-
 		HttpParser::http_types_info info_block;
 		auto status = HttpParser::parse(request, info_block);
 
@@ -171,8 +169,6 @@ void WorkWithClient::run() {
 				break;
 			}
 			}
-			
-			
 		}
 		else if (std::holds_alternative<HttpParser::get_t_info>(info_block))
 		{
@@ -191,6 +187,7 @@ void WorkWithClient::run() {
 			switch (get_info.msg)
 			{
 			case(HttpParser::e_get_msg::get_new_token):
+			{
 				try {
 					id = JwtToken::checkRefreshToken(get_info.refreshToken, secret);
 					std::string accessToken = JwtToken::createAccessToken(id, secret);
@@ -203,31 +200,27 @@ void WorkWithClient::run() {
 					std::cerr << e.what() << std::endl;
 				}
 				break;
+			}
 			case(HttpParser::e_get_msg::get_profile_by_nickname):
 			{
-				size_t nicknameStart = 4 + sizeof("/getProfileByNickname?nickname=") - 1;
-				size_t nicknameEnd = request.find(" ", nicknameStart) - 1;
-				std::string nickname = request.substr(nicknameStart, nicknameEnd - nicknameStart + 1);
 				try {
-					nlohmann::json body = dbAPI->getProfileInformation(nickname);
+					nlohmann::json body = dbAPI->getProfileInformation(get_info.properties["nickname"]);
 					sendResponse.sendAnswerOK(get_info.origin, body);
 				}
-				catch (const std::exception& e) {
+				catch (const std::exception& e) 
+				{
 					if (!std::strcmp(e.what(), "404"))
 						sendResponse.sendError(get_info.origin, "404", "Not found");
 					else
 						sendResponse.sendError(get_info.origin, "500", "Internal Server Error");
 				}
-			}
 				break;
+			}
 			case(HttpParser::e_get_msg::get_profile_photo):
 			{
-				size_t nicknameStart = 4 + sizeof("/getProfilePhoto?nickname=") - 1;
-				size_t nicknameEnd = request.find(" ", nicknameStart) - 1;
-				std::string nickname = request.substr(nicknameStart, nicknameEnd - nicknameStart + 1);
 				std::string type;
 				try {
-					std::vector<char> binData = dbAPI->getProfilePhoto(nickname, type);
+					std::vector<char> binData = dbAPI->getProfilePhoto(get_info.properties["nickname"], type);
 					sendResponse.sendAnswerOKBinData(get_info.origin, type, binData);
 				}
 				catch (const std::exception& e) {
@@ -236,16 +229,14 @@ void WorkWithClient::run() {
 					else
 						sendResponse.sendError(get_info.origin, "500", "Internal Server Error");
 				}
-			}
 				break;
+			}
 			case(HttpParser::e_get_msg::get_users_list):
 			{
-				std::unordered_map<std::string, std::string> properties;
 				try {
 					nlohmann::json json;
 
-					Request::URLParser(request, properties, sizeof("GET ") - 1);
-					dbAPI->getUsers(properties, json, id);
+					dbAPI->getUsers(get_info.properties, json, id);
 					sendResponse.sendAnswerOK(get_info.origin, json);
 				}
 				catch (const std::exception& e) {
@@ -254,14 +245,12 @@ void WorkWithClient::run() {
 					else
 						sendResponse.sendError(get_info.origin, "500", "Internal Server Error");
 				}
-			}
 				break;
+			}
 			case(HttpParser::e_get_msg::get_photo_by_id):
 			{
-				std::unordered_map<std::string, std::string> properties;
 				try {
-					Request::URLParser(request, properties, sizeof("GET ") - 1);
-					std::string id = properties.begin()->second;
+					std::string id = get_info.properties.begin()->second;
 
 					std::string type;
 					std::vector<char> binData = dbAPI->getPhotoById(id, type);
@@ -273,17 +262,14 @@ void WorkWithClient::run() {
 					else
 						sendResponse.sendError(get_info.origin, "500", "Internal Server Error");
 				}
-			}
 				break;
+			}
 			case(HttpParser::e_get_msg::make_friend):
 			{
-				std::unordered_map<std::string, std::string> properties;
-
 				try {
 					nlohmann::json json;
-					Request::URLParser(request, properties, sizeof("GET ") - 1);
-
-					dbAPI->makeFriend(id, properties["friend_id"]);
+					
+					dbAPI->makeFriend(id, get_info.properties["friend_id"]);
 					sendResponse.sendAnswerOK(get_info.origin);
 				}
 				catch (const std::exception& e) {
@@ -294,16 +280,14 @@ void WorkWithClient::run() {
 					else
 						sendResponse.sendError(get_info.origin, "500", "Internal Server Error");
 				}
-			}
 				break;
+			}
 			case(HttpParser::e_get_msg::delete_friend):
 			{
-				std::unordered_map<std::string, std::string> properties;
 				try {
 					nlohmann::json json;
-					Request::URLParser(request, properties, sizeof("GET ") - 1);
-
-					dbAPI->deleteFriend(id, properties["friend_id"]);
+					
+					dbAPI->deleteFriend(id, get_info.properties["friend_id"]);
 					sendResponse.sendAnswerOK(get_info.origin);
 				}
 				catch (const std::exception& e) {
@@ -314,17 +298,14 @@ void WorkWithClient::run() {
 					else
 						sendResponse.sendError(get_info.origin, "500", "Internal Server Error");
 				}
-			}
 				break;
+			}
 			case(HttpParser::e_get_msg::get_status):
 			{
-				std::unordered_map<std::string, std::string> properties;
-
 				try {
 					nlohmann::json json;
 
-					Request::URLParser(request, properties, sizeof("GET ") - 1);
-					dbAPI->getStatus(id, properties.begin()->second, json);
+					dbAPI->getStatus(id, get_info.properties.begin()->second, json);
 					sendResponse.sendAnswerOK(get_info.origin, json);
 				}
 				catch (const std::exception& e) {
@@ -335,8 +316,8 @@ void WorkWithClient::run() {
 					else
 						sendResponse.sendError(get_info.origin, "500", "Internal Server Error");
 				}
-			}
 				break;
+			}
 			case(HttpParser::e_get_msg::get_id_fs_by_access):
 			{
 				try {
@@ -347,8 +328,8 @@ void WorkWithClient::run() {
 				catch (const std::exception& e) {
 					sendResponse.sendError(get_info.origin, "500", "Internal Server Error");
 				}
-			}
 				break;
+			}
 			}
 		}
 

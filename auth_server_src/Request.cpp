@@ -2,7 +2,7 @@
 #include <iostream>
 
 
-void Request::URLParser(std::string_view httpString, std::unordered_map<std::string, std::string>& result, std::size_t start) 
+void Request::URLParser(std::string_view httpString, std::map<std::string, std::string>& result, std::size_t start) 
 {
 	if (httpString.empty()) return;
 	size_t p = start, properStart = 0, properEnd = 0, separator = 0;
