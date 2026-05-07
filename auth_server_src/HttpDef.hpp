@@ -91,6 +91,11 @@ namespace HttpParser
 		e_post_msg msg;
 		nlohmann::json jsonBody;
 		std::string accessToken;
+
+		std::map<std::string, std::string> userProperties;
+		std::map<std::string, std::pair<std::size_t, std::size_t>> filesCoordinates;
+
+		std::vector<std::byte> binaryData;
 	};
 
 	struct get_t_info

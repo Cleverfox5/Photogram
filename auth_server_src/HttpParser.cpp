@@ -1,4 +1,5 @@
 #include "HttpParser.hpp"
+#include "FormData.hpp"
 #include <optional>
 
 namespace HttpParser
@@ -112,7 +113,9 @@ bool parse_get_t(std::string_view req, http_types_info& info_block)
 	case(e_get_msg::get_id_fs_by_access):
         get_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
 	    break;
-	}
+    }
+
+    return true;
 }
 
 bool parse_post_t(std::string_view req, http_types_info& info_block)
@@ -136,10 +139,29 @@ bool parse_post_t(std::string_view req, http_types_info& info_block)
         
         break;
     case(e_post_msg::registration):
+    {
+        FormData::parse(req, post_info.userProperties, post_info.filesCoordinates);
+
+        auto& element = post_info.filesCoordinates.begin();
+        auto file = req.substr(element->second.first, element->second.second);
+
+        post_info.binaryData.resize(file.size());
+        std::memcpy(post_info.binaryData.data(), file.data(), file.size());
+
         break;
+    }
     case(e_post_msg::update_profile_photo):
+    {
         post_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
+        FormData::parsePhotoOnly(req, post_info.userProperties, post_info.filesCoordinates);
+
+        auto& element = post_info.filesCoordinates.begin();
+        auto file = req.substr(element->second.first, element->second.second);
+
+        post_info.binaryData.resize(file.size());
+        std::memcpy(post_info.binaryData.data(), file.data(), file.size());
         break;
+    }
     case(e_post_msg::update_profile_data):
         post_info.accessToken = Request::getValueWithSpace(req, "Bearer ");
         post_info.jsonBody = get_body(req);

@@ -4,23 +4,21 @@
 #include "Request.hpp"
 
 class FormData {
-	Request utils;
-
-	void addPhoto(std::string& request, size_t& argPostion, size_t startPositon, size_t finishPositon,
-		std::unordered_map<std::string, std::pair<std::size_t, std::size_t>>& filesCoordinates,
-		std::unordered_map<std::string, std::string>& userProperties);
+	static void addPhoto(std::string_view request, size_t& argPostion, size_t startPositon, size_t finishPositon,
+		std::map<std::string, std::pair<std::size_t, std::size_t>>& filesCoordinates,
+		std::map<std::string, std::string>& userProperties);
 	
-	std::string getSeparator(std::string& request);
+	static std::string getSeparator(std::string_view request);
 	
-	void separatorToPropertis(std::string& request, std::string& separator,
-		std::unordered_map<std::string, std::string>& userProperties,
-		std::unordered_map<std::string, std::pair<std::size_t, std::size_t>>& FilesCoordinates);
+	static void separatorToPropertis(std::string_view request, std::string& separator,
+		std::map<std::string, std::string>& userProperties,
+		std::map<std::string, std::pair<std::size_t, std::size_t>>& FilesCoordinates);
 public:
-	void parse(std::string & request,
-		std::unordered_map<std::string, std::string> & userProperties, 
-		std::unordered_map<std::string, std::pair<std::size_t, std::size_t>> & FilesCoordinates);
+	static void parse(std::string_view request,
+		std::map<std::string, std::string> & userProperties, 
+		std::map<std::string, std::pair<std::size_t, std::size_t>> & FilesCoordinates);
 
-	void parsePhotoOnly(std::string& request,
-		std::unordered_map<std::string, std::string>& userProperties,
-		std::unordered_map<std::string, std::pair<std::size_t, std::size_t>>& filesCoordinates);
+	static void parsePhotoOnly(std::string_view request,
+		std::map<std::string, std::string>& userProperties,
+		std::map<std::string, std::pair<std::size_t, std::size_t>>& filesCoordinates);
 };

@@ -91,21 +91,15 @@ WorkWithPostgreSQL::WorkWithPostgreSQL(const std::string & connection_str)
 	}
 }
 
-std::string WorkWithPostgreSQL::addNewPhoto(std::string & request, std::unordered_map<std::string, std::pair<std::size_t, std::size_t>> & filesCoordinates, std::unordered_map<std::string, std::string> & userProperties) {
+std::string WorkWithPostgreSQL::addNewPhoto(HttpParser::post_t_info& post_info) 
+{
 	try {
 		pqxx::work work(*connect);
 		pqxx::row res;
 
-
-		auto element = filesCoordinates.begin();
-		std::string file = request.substr(element->second.first, element->second.second);
-		
-		std::vector<std::byte> binaryData(file.size());
-		std::memcpy(binaryData.data(), file.data(), file.size());
-
 		res = work.exec_prepared1("addPhoto",
-			userProperties["photo_type"],
-			pqxx::binarystring(reinterpret_cast<const char*>(binaryData.data()), binaryData.size())
+			post_info.userProperties["photo_type"],
+			pqxx::binarystring(reinterpret_cast<const char*>(post_info.binaryData.data()), post_info.binaryData.size())
 		);
 
 		
@@ -217,7 +211,7 @@ std::string WorkWithPostgreSQL::checkPassword(std::string login, std::string pas
 	}
 }
 
-std::string WorkWithPostgreSQL::addProperties(std::unordered_map<std::string, std::string> & userProperties) {
+std::string WorkWithPostgreSQL::addProperties(std::map<std::string, std::string> & userProperties) {
 	try {
 		pqxx::work work(*connect);
 		pqxx::row res;
@@ -285,19 +279,16 @@ void WorkWithPostgreSQL::deletePhoto(std::string PhotoId) {
 	}
 }
 
-std::string WorkWithPostgreSQL::addNewUser(std::string& request, nlohmann::json& registrAnswerJson) {
+std::string WorkWithPostgreSQL::addNewUser(HttpParser::post_t_info& post_info, nlohmann::json& registrAnswerJson) {
 	bool isAddProperties = false;
 	bool isAddPhoto = false;
 	std::string photoId;
 	std::string userId = "";
-	std::unordered_map<std::string, std::string> userProperties;
-	std::unordered_map<std::string, std::pair<std::size_t, std::size_t>> filesCoordinates;
 	try {
-		formData.parse(request, userProperties, filesCoordinates);
 
-		userId = addProperties(userProperties);
+		userId = addProperties(post_info.userProperties);
 		isAddProperties = true;
-		photoId = addNewPhoto(request, filesCoordinates, userProperties);
+		photoId = addNewPhoto(post_info);
 		isAddPhoto = true;
 
 		connectPropertiesAndPhoto(userId, photoId);
@@ -423,22 +414,16 @@ void WorkWithPostgreSQL::getStatus(const std::string& user_id, const std::string
 	}
 }
 
-void WorkWithPostgreSQL::updatePhoto(std::string& request, std::unordered_map<std::string, std::pair<std::size_t, std::size_t>>& filesCoordinates, std::unordered_map<std::string, std::string>& userProperties, std::string & id) {
+void WorkWithPostgreSQL::updatePhoto(HttpParser::post_t_info& post_info, std::string & id) 
+{
 	try {
 		pqxx::work work(*connect);
 
-		auto element = filesCoordinates.begin();
-		std::string file = request.substr(element->second.first, element->second.second);
-
-		std::vector<std::byte> binaryData(file.size());
-		std::memcpy(binaryData.data(), file.data(), file.size());
-
 		work.exec_prepared0("updateProfilePhoto",
-			userProperties["photo_type"],
-			pqxx::binarystring(reinterpret_cast<const char*>(binaryData.data()), binaryData.size()),
+			post_info.userProperties["photo_type"],
+			pqxx::binarystring(reinterpret_cast<const char*>(post_info.binaryData.data()), post_info.binaryData.size()),
 			id
 		);
-
 
 		work.commit();
 	}
@@ -447,13 +432,9 @@ void WorkWithPostgreSQL::updatePhoto(std::string& request, std::unordered_map<st
 	}
 }
 
-void WorkWithPostgreSQL::updateProfilePhoto(std::string& request, std::string& id) {
-	std::unordered_map<std::string, std::string> userProperties;
-	std::unordered_map<std::string, std::pair<std::size_t, std::size_t>> filesCoordinates;
+void WorkWithPostgreSQL::updateProfilePhoto(HttpParser::post_t_info& post_info, std::string& id) {
 	try {
-		formData.parsePhotoOnly(request, userProperties, filesCoordinates);
-
-		updatePhoto(request, filesCoordinates, userProperties, id);
+		updatePhoto(post_info, id);
 	}
 	catch (std::exception const& e) {
 		std::cerr << e.what() << std::endl;

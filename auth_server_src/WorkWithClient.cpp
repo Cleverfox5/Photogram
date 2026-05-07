@@ -34,7 +34,7 @@ void WorkWithClient::run() {
 	while ((bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0)) > 0) {
 		request.append(buffer, bytesRead);
 
-		std::cout << request << "\n\n";
+		//std::cout << request << "\n\n";
 
 		HttpParser::http_types_info info_block;
 		auto status = HttpParser::parse(request, info_block);
@@ -86,7 +86,7 @@ void WorkWithClient::run() {
 				std::cout << "request to registration was getting\n";
 				nlohmann::json registrAnswerJson;
 				try {
-					std::string id = dbAPI->addNewUser(request, registrAnswerJson);
+					std::string id = dbAPI->addNewUser(post_info, registrAnswerJson);
 
 					sendResponse.sendAnswerOK(post_info.origin);
 				}
@@ -109,7 +109,7 @@ void WorkWithClient::run() {
 				catch (const std::exception& e) { continue; }
 
 				try {
-					dbAPI->updateProfilePhoto(request, id);
+					dbAPI->updateProfilePhoto(post_info, id);
 
 					sendResponse.sendAnswerOK(post_info.origin);
 				}
@@ -129,7 +129,7 @@ void WorkWithClient::run() {
 			{
 				std::string id;
 				try {
-					id = checkAccesstoken(request, post_info.accessToken, sendResponse);
+					id = checkAccesstoken(post_info.origin, post_info.accessToken, sendResponse);
 				}
 				catch (const std::exception& e) { continue; }
 
