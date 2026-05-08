@@ -1,3 +1,6 @@
 [submodule "photogram_client"]
 	path = photogram_client
 	url = https://github.com/Cleverfox5/photogram_client.git
+[submodule "tests"]
+	path = tests
+	url = ../photogram_tests.git
