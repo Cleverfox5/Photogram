@@ -87,7 +87,7 @@ namespace HttpParser
 
 	struct post_t_info
 	{
-		std::string origin; //optimize
+		std::string origin;
 		e_post_msg msg;
 		nlohmann::json jsonBody;
 		std::string accessToken;
@@ -100,7 +100,7 @@ namespace HttpParser
 
 	struct get_t_info
 	{
-		std::string origin; //optimize
+		std::string origin;
 		e_get_msg msg;
 		std::string refreshToken;
 		std::string accessToken;
