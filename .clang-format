@@ -1,0 +1,21 @@
+# Базовый стиль форматирования
+BasedOnStyle: LLVM
+
+# Размер отступа в пробелах
+IndentWidth: 4
+
+# запрет на использовать табуляции, только пробелы
+UseTab: Never
+
+# Открытие фигурной скобки на следующей строке
+BreakBeforeBraces: Allman
+
+# Только inline функции могут быть написаны в одну строку
+AllowShortFunctionsOnASingleLine: Inline
+
+# Запрет писать короткие if в одну строку
+AllowShortIfStatementsOnASingleLine: false
+
+# Установка максимальной длины строки в символах
+ColumnLimit: 120
+
